@@ -19,7 +19,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # end
 
   end
-  config.vm.define :db2 do |sv|
+  config.vm.define :db2, autostart: false do |sv|
     sv.vm.network :private_network, ip: "192.168.33.11"
   end
 end

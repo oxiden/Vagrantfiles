@@ -1,0 +1,47 @@
+#!/bin/bash
+#
+# cassandra        Start up the Apache Cassandra daemon
+#
+# chkconfig: 2345 99 25
+# description: Apache Cassandra, NoSQL.
+#
+# processname: /usr/local/cassandra/bin/cassandra
+# config: /usr/local/cassandra/conf/cassandra.yaml
+# config: /usr/local/cassandra/conf/cassandra-env.sh
+# pidfile: /var/run/cassandra
+
+CASSANDRA_ROOT_DIR=/usr/local/cassandra
+CASSANDRA_BIN_DIR=${CASSANDRA_ROOT_DIR}/bin
+CASSANDRA_LOG_DIR=/var/log/cassandra
+CASSANDRA_RUN_DIR=/var/run/cassandra
+case "$1" in
+  start)
+    if [ ! -d ${CASSANDRA_LOG_DIR} ]; then
+      mkdir ${CASSANDRA_LOG_DIR}
+    fi
+    if [ ! -d ${CASSANDRA_RUN_DIR} ]; then
+      mkdir ${CASSANDRA_RUN_DIR}
+    fi
+    if [ -e ${CASSANDRA_RUN_DIR}/cassandra.pid ]; then
+      if [ 1 -ne $(ps $(cat ${CASSANDRA_RUN_DIR}/cassandra.pid) | wc -l) ]; then
+        echo "NG: already running (pid=$(cat ${CASSANDRA_RUN_DIR}/cassandra.pid))"
+        exit 1
+      fi
+    fi
+    ${CASSANDRA_BIN_DIR}/cassandra -p ${CASSANDRA_RUN_DIR}/cassandra.pid >> ${CASSANDRA_LOG_DIR}/cassandra.log 2>&1
+    echo "OK: running cassandra (pid=$(cat ${CASSANDRA_RUN_DIR}/cassandra.pid))"
+    ;;
+  stop)
+    kill $(cat ${CASSANDRA_RUN_DIR}/cassandra.pid)
+    echo "OK: stopped cassandra"
+    ;;
+  restart)
+    $0 stop
+    sleep 2
+    $0 start
+    ;;
+  *)
+    echo "Usage: `basename $0` start|stop|restart"
+esac
+exit 0
+
