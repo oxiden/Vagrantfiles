@@ -1,0 +1,30 @@
+# -*- mode: ruby -*-
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "centos65_x64"
+  config.vm.box_check_update = false
+  config.vm.provider "virtualbox" do |vb|
+    vb.gui = false
+    vb.memory = "256"
+  end
+
+  config.vm.define :LB do |sv|
+    node_ipaddress = "192.168.33.10"
+    sv.vm.hostname = "lb.localdomain"
+    sv.vm.network "private_network", ip: node_ipaddress
+    sv.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
+    sv.vm.provision :shell, :path => "prov_LB.sh", :privileged => true, :args => "'#{node_ipaddress}'"
+  end
+  config.vm.define :Web1 do |sv|
+    node_ipaddress = "192.168.33.11"
+    sv.vm.hostname = "web1.localdomain"
+    sv.vm.network "private_network", ip: node_ipaddress
+    sv.vm.provision :shell, :path => "prov_Web.sh", :privileged => true, :args => "'#{node_ipaddress}' 'Web1'"
+  end
+  config.vm.define :Web2 do |sv|
+    node_ipaddress = "192.168.33.12"
+    sv.vm.hostname = "web2.localdomain"
+    sv.vm.network "private_network", ip: node_ipaddress
+    sv.vm.provision :shell, :path => "prov_Web.sh", :privileged => true, :args => "'#{node_ipaddress}' 'Web2'"
+  end
+end
