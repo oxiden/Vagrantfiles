@@ -1,0 +1,7 @@
+# file: development
+
+[webservers]
+192.168.33.11
+
+[others]
+192.168.33.12
