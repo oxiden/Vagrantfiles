@@ -1,2 +1,2 @@
-- name: restart ntpd
+- name: restart NTP
   service: name=ntpd state=restarted
