@@ -1,0 +1,24 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+
+  config.vm.box = "centos65_x64"
+
+  config.vm.define :node1 do |node|
+    node.vm.hostname = "postgresql"
+    node.vm.network :forwarded_port, guest: 22, host: 2001, id: "ssh"
+    node.vm.network :private_network, ip: "192.168.33.11"
+  end
+
+  config.vm.provision "shell", inline: <<-SHELL
+    rpm -ivh http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm
+    yum install -y postgresql93-server postgresql93-devel
+    yum install -y postgresql93-contrib
+    service postgresql-9.3 initdb
+    service postgresql-9.3 start
+    chkconfig postgresql-9.3 on
+
+    su - postgres -c 'createuser --superuser vagrant'
+  SHELL
+end
