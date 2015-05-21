@@ -1,0 +1,49 @@
+# coding: utf-8
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "centos65_x64"
+
+  config.vm.define :zabbix do |sv|
+    sv.vm.hostname = "zabbix"
+    #sv.vm.network :private_network, ip: "192.168.33.11"
+    sv.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
+  end
+
+  # Enable provisioning with a shell script. Additional provisioners such as
+  # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
+  # documentation for more information about their specific syntax and use.
+  config.vm.provision "shell", inline: <<-SHELL
+    yum install -y httpd mysql-server
+    chkconfig httpd on
+    sed -i -e "/symbolic-links=0/a character-set-server=utf8" /etc/my.cnf
+    /etc/init.d/mysqld start
+    chkconfig mysqld on
+    /usr/bin/mysqladmin -u root password zabbix
+    /usr/bin/mysqladmin -u root --password=zabbix -hzabbix password zabbix
+    #/usr/bin/mysql_secure_installation
+
+    rpm -ivh http://repo.zabbix.com/zabbix/2.4/rhel/6/x86_64/zabbix-release-2.4-1.el6.noarch.rpm
+    yum install -y zabbix-server-mysql zabbix-web-mysql zabbix-web-japanese
+
+    echo 'create database zabbix character set utf8;' | mysql -u root -pzabbix
+    echo 'grant all privileges on zabbix.* to zabbix@localhost identified by "zabbixpw";' | mysql -u root -pzabbix
+    echo 'FLUSH PRIVILEGES;' | mysql -u root -pzabbix
+    mysql -uroot -pzabbix zabbix < /usr/share/doc/zabbix-server-mysql-2.4.5/create/schema.sql
+    mysql -uroot -pzabbix zabbix < /usr/share/doc/zabbix-server-mysql-2.4.5/create/images.sql
+    mysql -uroot -pzabbix zabbix < /usr/share/doc/zabbix-server-mysql-2.4.5/create/data.sql
+
+    sed -i -e '/\[Date\]/a date.timezone = "Asia/Tokyo"' /etc/php.ini
+
+    sed -i -e "/# DBPassword=/a DBPassword=zabbixpw" /etc/zabbix/zabbix_server.conf
+    service zabbix-server start
+    chkconfig zabbix-server on
+
+    localedef -f UTF-8 -i ja_JP ja_JP
+    service zabbix-server restart
+    service httpd restart
+
+    echo "access to http://$(ip -family inet addr show dev eth1 | grep -o 'inet [0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | grep -o [0-9].*)/zabbix with admin/zabbix"
+  SHELL
+end
