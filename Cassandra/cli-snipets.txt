@@ -1,0 +1,13 @@
+for cassandra-cli
+
+CREATE KEYSPACE DEMO
+with placement_strategy = 'SimpleStrategy'
+and strategy_options = {replication_factor:1};
+
+use DEMO;
+
+CREATE COLUMN FAMILY Users
+with comparator = UTF8Type
+and key_validation_class=UTF8Type
+and default_validation_class=UTF8Type;
+
