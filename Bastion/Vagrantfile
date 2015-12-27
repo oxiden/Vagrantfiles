@@ -1,0 +1,50 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+server_ip  = "192.168.33.20"
+bastion_ip = "192.168.33.21"
+client_ip  = "192.168.33.22"
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "centos65_x64"
+  config.vm.synced_folder ".", "/vagrant"
+  config.vm.provider "virtualbox" do |vb|
+    vb.gui = false
+    vb.customize ["modifyvm", :id, "--memory", "256"]
+  end
+  #config.ssh.insert_key = false
+  config.vm.define :server do |sv|
+    #sv.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
+    sv.vm.network :private_network, ip: server_ip
+    sv.vm.hostname = "server"
+    sv.vm.provision "file", source: "id_rsa.bastion.pub", destination: "/home/vagrant/.ssh/authorized_keys"
+    sv.vm.provision "shell", inline: <<-SHELL
+      echo "sshd: #{bastion_ip}" >> /etc/hosts.allow
+      echo "sshd: ALL" > /etc/hosts.deny
+    SHELL
+    # sv.vm.provision "shell", inline: <<-SHELL
+    #   echo "#{bastion_ip} bastion" >> /etc/hosts
+    # SHELL
+  end
+  config.vm.define :bastion do |sv|
+    sv.vm.network :private_network, ip: bastion_ip
+    sv.vm.hostname = "bastion"
+    sv.vm.provision "file", source: "id_rsa.client.pub", destination: "/home/vagrant/.ssh/authorized_keys"
+    sv.vm.provision "shell", inline: <<-SHELL
+      echo "#{server_ip} server" >> /etc/hosts
+    SHELL
+  end
+  config.vm.define :client do |sv|
+    sv.vm.network :private_network, ip: client_ip
+    sv.vm.hostname = "client"
+    sv.vm.provision "file", source: "id_rsa.client",      destination: "/home/vagrant/.ssh/id_rsa.client"
+    sv.vm.provision "file", source: "id_rsa.client.pub",  destination: "/home/vagrant/.ssh/id_rsa.client.pub"
+    sv.vm.provision "file", source: "id_rsa.bastion",     destination: "/home/vagrant/.ssh/id_rsa.bastion"
+    sv.vm.provision "file", source: "id_rsa.bastion.pub", destination: "/home/vagrant/.ssh/id_rsa.bastion.pub"
+    sv.vm.provision "file", source: "ssh_config",         destination: "/home/vagrant/.ssh/config"
+    # sv.vm.provision "shell", inline: <<-SHELL
+    #   echo "#{server_ip} server" >> /etc/hosts
+    #   echo "#{bastion_ip} bastion" >> /etc/hosts
+    # SHELL
+  end
+end

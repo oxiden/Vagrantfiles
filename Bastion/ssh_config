@@ -1,0 +1,12 @@
+Host bastion
+  hostname 192.168.33.21
+  Port 22
+  IdentityFile ~/.ssh/id_rsa.client
+  #User vagrant
+  #ForwardAgent yes
+
+Host server
+  Hostname 192.168.33.20
+  IdentityFile ~/.ssh/id_rsa.bastion
+  ProxyCommand ssh bastion -W %h:%p
+  #ProxyCommand ssh vagrant@bastion nc %h %p
