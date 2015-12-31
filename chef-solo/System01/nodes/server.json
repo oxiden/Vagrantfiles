@@ -1,0 +1,8 @@
+{
+  "run_list": [
+    "production"
+  ],
+  "automatic": {
+    "ipaddress": "server"
+  }
+}
