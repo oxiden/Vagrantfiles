@@ -1,0 +1,39 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.require_version '>= 1.8.0'
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "centos65_x64"
+
+  config.vm.provider "virtualbox" do |vb|
+    # Display the VirtualBox GUI when booting the machine
+    vb.gui = false
+    # Customize the amount of memory on the VM:
+    vb.memory = "512"
+  end
+
+  config.vm.synced_folder ".", "/vagrant"
+  config.vm.define :server do |sv|
+    #sv.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
+    sv.vm.network :private_network, ip: "192.168.33.10"
+    sv.vm.hostname = "server"
+    sv.vm.provision "shell", inline: <<-SHELL
+      #sed -i -e 's/^ZONE=".+"/ZONE="Asia/Tokyo"/' /etc/sysconfig/clock
+      #source /etc/sysconfig/clock
+      #ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+      ln -sf /usr/share/zoneinfo/right/UTC /etc/localtime
+      yum install -y ntp ntpdate
+      sed -i -e "/^server /d" /etc/ntp.conf
+
+      echo "server ntp.jst.mfeed.ad.jp iburst prefer" >> /etc/ntp.conf
+      echo "ntp.jst.mfeed.ad.jp" >> /etc/ntp/step-tickers
+      service ntpdate start
+      chkconfig ntpdate on
+      service ntpd start
+      chkconfig ntpd on
+      service vboxadd-service stop
+      service vboxadd stop
+    SHELL
+   end
+end
