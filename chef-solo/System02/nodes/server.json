@@ -1,0 +1,16 @@
+{
+  "chef_type": "node",
+  "chef_environment" : "production",
+  "run_list": [
+    "role[linux]"
+  ],
+  "default": {
+  },
+  "normal": {
+  },
+  "override": {
+  },
+  "automatic": {
+    "ipaddress": "server"
+  }
+}
