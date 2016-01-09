@@ -1,0 +1,16 @@
+{
+  "name": "linux",
+  "description": "The general purpose linux role.",
+  "chef_type": "role",
+  "json_class": "Chef::Role",
+  "run_list": [
+    "recipe[ntpd]",
+    "recipe[selinux::disabled]"
+  ],
+  "env_run_lists" : {
+  },
+  "default_attributes": {
+  },
+  "override_attributes": {
+  }
+}

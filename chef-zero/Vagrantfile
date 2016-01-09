@@ -1,0 +1,33 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.require_version '>= 1.8.0'
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "centos65_x64"
+
+  config.vm.provider "virtualbox" do |vb|
+    # Display the VirtualBox GUI when booting the machine
+    vb.gui = false
+    # Customize the amount of memory on the VM:
+    vb.memory = "512"
+  end
+
+  config.vm.synced_folder ".", "/vagrant"
+  config.vm.define :server do |sv|
+    #sv.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
+    sv.vm.network :private_network, ip: "192.168.33.10"
+    sv.vm.hostname = "server"
+    sv.vm.provision :chef_zero do |chef|
+      chef.cookbooks_path = "System02/site-cookbooks"
+      #chef.data_bags_path = ["System02/data_bags"]
+      chef.environments_path = "System02/environments"
+      chef.nodes_path = "System02/nodes"
+      #chef.environment = ""
+      #chef.recipe_url = ""
+      chef.roles_path = "System02/roles"
+      #chef.add_recipe ""
+      chef.add_role "linux"
+    end
+  end
+end
