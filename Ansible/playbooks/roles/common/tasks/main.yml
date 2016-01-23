@@ -1,8 +1,8 @@
-- name: Install NTP
+- name: Install NTPd
   yum: name=ntp state=present
 - name: Configure NTP
   template: src=ntp.conf.j2 dest=/etc/ntp.conf
   notify:
-  - restart NTP
+  - restart NTPd
 - name: be sure ntpd is running and enabled
   service: name=ntpd state=started enabled=yes

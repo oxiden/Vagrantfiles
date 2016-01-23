@@ -1,28 +1,40 @@
-# -*- mode: ruby -*-
-
-ENV["ANSIBLE_NOCOWS"] = "1"
+Vagrant.require_version '>= 1.8.0'
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "centos65_x64"
-  config.vm.define :node1 do |node|
-    node.vm.hostname = "node1"
-    node.vm.network :forwarded_port, guest: 22, host: 2001, id: "ssh"
-    node.vm.network :private_network, ip: "192.168.33.11"
+  # General
+  config.vm.box = "centos67_x64"
+  config.vm.provider "virtualbox" do |vb|
+    vb.gui = false
+    vb.memory = "512"
   end
-  config.vm.define :node2 do |node|
-    node.vm.hostname = "node2"
-    node.vm.network :forwarded_port, guest: 22, host: 2002, id: "ssh"
-    node.vm.network :forwarded_port, guest: 80, host: 8000, id: "http"
-    node.vm.network :private_network, ip: "192.168.33.12"
+  config.vm.synced_folder ".", "/vagrant"
+
+  # Nodes
+  (1..2).each do |i|
+    node_name = "web%03d" % i
+    config.vm.define node_name do |sv|
+      #sv.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
+      sv.vm.network :private_network, ip: "192.168.33.#{10+i}"
+      sv.vm.hostname = node_name
+    end
   end
-  config.vm.provision "ansible" do |ansible|
+  config.vm.define "db001" do |sv|
+    #sv.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
+    sv.vm.network :private_network, ip: "192.168.33.21"
+    sv.vm.hostname = "db001"
+  end
+
+  # Provision
+  config.vm.provision :ansible do |ansible|
+    ENV['ANSIBLE_NOCOWS'] = "1"
+    #ansible.ask_sudo_pass = false
     ansible.host_key_checking = false
     #ansible.verbose = "vvvv"
     ansible.playbook = "playbooks/site.yml"
     ansible.groups = {
-      "webservers" => ["node1"],
-      "others" => ["node2"],
-      "all_groups:children" => ["webservers", "others"]
+      "webservers" => ["web001", "web002"],
+      "dbservers" => ["db001"],
+      "all_groups:children" => ["webservers", "dbservers"]
     }
   end
 end

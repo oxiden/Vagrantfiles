@@ -1,0 +1,4 @@
+- name: Install mysqld
+  yum: name=mysql-server state=latest
+- name: be sure mysqld is running and enabled
+  service: name=mysqld state=started enabled=yes
