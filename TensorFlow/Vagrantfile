@@ -1,0 +1,33 @@
+Vagrant.require_version '>= 1.8.0'
+
+Vagrant.configure(2) do |config|
+  # General
+  config.vm.box = "centos72_x64"
+  config.vm.provider "virtualbox" do |vb|
+    vb.gui = false
+    vb.memory = "512"
+  end
+  config.vm.synced_folder ".", "/vagrant"
+
+  # Nodes
+  config.vm.define :server do |sv|
+    #sv.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
+    sv.vm.network :private_network, ip: "192.168.33.10"
+    sv.vm.hostname = "tensorflow"
+    sv.vm.provision "shell", privileged: false, inline: <<-SHELL
+      #yum check-update
+      #yum update -y
+      curl -sO https://bootstrap.pypa.io/get-pip.py
+      sudo python ./get-pip.py
+      sudo pip install virtualenv
+      mkdir ~/tensorflow
+      virtualenv --system-site-packages ~/tensorflow
+      cd ~/tensorflow
+      source bin/activate
+      pip install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.8.0-cp27-none-linux_x86_64.whl
+      pip uninstall -yes protobuf
+      pip install 'protobuf>=3.0.0a3'
+      python /vagrant/hello-tf.py >/dev/null
+    SHELL
+  end
+end
