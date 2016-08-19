@@ -24,9 +24,8 @@ Vagrant.configure(2) do |config|
       virtualenv --system-site-packages ~/tensorflow
       cd ~/tensorflow
       source bin/activate
-      pip install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.8.0-cp27-none-linux_x86_64.whl
-      pip uninstall -yes protobuf
-      pip install 'protobuf>=3.0.0a3'
+      export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.10.0rc0-cp27-none-linux_x86_64.whl
+      pip install --upgrade $TF_BINARY_URL
       python /vagrant/hello-tf.py >/dev/null
     SHELL
   end
