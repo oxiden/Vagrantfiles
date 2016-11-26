@@ -31,6 +31,9 @@ end
 describe command('ntpq -pn') do
   its(:stdout) { should contain('^\*\d+') }
 end
+describe command('ntpdate -q ntp.jst.mfeed.ad.jp | ruby -e "puts (STDIN.read =~ /\-?([0-9]+\.[0-9]+) sec$/ && $1.to_f > 1.5) ? 1 : 0"') do
+  its(:stdout) { '0' }
+end
 
 # timezone
 describe file('/etc/localtime') do
