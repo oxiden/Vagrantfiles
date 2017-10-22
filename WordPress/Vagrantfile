@@ -1,0 +1,45 @@
+# coding: utf-8
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+WORDPRESS_ARC = "wordpress-4.8.2-ja.tar.gz"
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "centos65_x64"
+  config.vbguest.auto_update = false
+  config.vm.synced_folder ".", "/vagrant"
+
+  config.vm.define :wordpress do |sv|
+    sv.vm.hostname = "wordpress"
+    sv.vm.network "public_network", bridge: 'en0: Wi-Fi (AirPort)'
+    sv.vm.provision "shell", inline: <<-SHELL
+      yum install -y httpd mysql-server php php-mysql php-mbstring
+      sed -i -e 's/^#ServerName www\.example\.com:80$/ServerName wordpress:80/' /etc/httpd/conf/httpd.conf
+      service httpd start
+      chkconfig httpd on
+      sed -i -e "/symbolic-links=0/a character-set-server=utf8" /etc/my.cnf
+      service mysqld start
+      chkconfig mysqld on
+      /usr/bin/mysqladmin -u root password mysqlpw
+      /usr/bin/mysqladmin -u root -pmysqlpw -hlocalhost password mysqlpw
+      #/usr/bin/mysql_secure_installation
+      echo 'CREATE DATABASE wpdb;' | mysql -u root -pmysqlpw
+      echo 'grant all privileges on wpdb.* to wpuser@localhost identified by "wppw";' | mysql -u root -pmysqlpw
+      echo 'FLUSH PRIVILEGES;' | mysql -u root -pmysqlpw
+
+      cd /root
+      tar xzf /vagrant/#{WORDPRESS_ARC}
+      cd wordpress
+      cp -a wp-config-sample.php wp-config.php
+      sed -i -e "s/database_name_here/wpdb/" wp-config.php
+      sed -i -e "s/username_here/wpuser/" wp-config.php
+      sed -i -e "s/password_here/wppw/" wp-config.php
+      cp -a /root/wordpress /var/www/html
+      chown -R apache:apache /var/www/html/wordpress
+      cp /vagrant/wordpress.conf /etc/httpd/conf.d/
+      service httpd restart
+
+      echo "access to http://$(ip -family inet addr show dev eth1 | grep -o 'inet [0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | grep -o [0-9].*)/wordpress"
+    SHELL
+  end
+end
